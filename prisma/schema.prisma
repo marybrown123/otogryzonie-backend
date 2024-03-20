@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id Int @default(autoincrement()) @id
+  email String
+  password String
+  name String
+  secondName String @map("second_name")
+  phoneNumber String @map("phone_number")
+  type UserType
+  advertisments Advertisment[]
+  image UserImage?
+
+  @@map("user")
+}
+
+model Rodent {
+  id Int @default(autoincrement()) @id
+  name String
+  type RodentType
+  advertisment Advertisment?
+  featuresId Int @unique @map("features_id")
+  features Features @relation(fields: [featuresId], references: [id])
+  images RodentImage[]
+
+  @@map("rodent")
+}
+
+model Advertisment {
+  id Int @default(autoincrement()) @id
+  description String
+  type AdvertismentType
+  location String
+  userId Int @map("user_id")
+  user User @relation(fields: [userId], references: [id])
+  rodentId Int @unique @map("rodent_id")
+  rodent Rodent @relation(fields: [rodentId], references: [id])
+
+  @@map("advertisment")
+}
+
+model Features {
+  id Int @default(autoincrement()) @id
+  species String
+  gender Gender
+  age String
+  color String
+  domestication String
+  hairLength String @map("hair_length")
+  neutered String
+  rodent Rodent?
+
+  @@map("features")
+}
+
+model RodentImage {
+  id Int @default(autoincrement()) @id
+  name String
+  url String
+  rodentId Int @map("rodent_id")
+  rodent Rodent @relation(fields: [rodentId], references: [id])
+
+  @@map("rodent_image")
+}
+
+model UserImage {
+  id Int @default(autoincrement()) @id
+  name String
+  url String
+  userId Int @unique @map("user_id")
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("user_image")
+}
+
+enum RodentType {
+  GUINEA_PIG
+  HAMSTER
+  RAT
+  MOUSE
+  CHINCHILLA
+  DEGUS
+}
+
+enum UserType {
+  BREEDER
+  PRIVATE_PERSON
+}
+
+enum AdvertismentType {
+  BREEDING
+  ADOPTIVE
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
