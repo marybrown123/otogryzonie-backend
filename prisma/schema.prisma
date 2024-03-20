@@ -25,7 +25,7 @@ model Rodent {
   name String
   type RodentType
   advertisment Advertisment?
-  featuresId Int @unique
+  featuresId Int @unique @map("features_id")
   features Features @relation(fields: [featuresId], references: [id])
 
   @@map("rodent")
@@ -36,10 +36,12 @@ model Advertisment {
   description String
   type AdvertismentType
   location String
-  userId Int
+  userId Int @map("user_id")
   user User @relation(fields: [userId], references: [id])
-  rodentId Int @unique
+  rodentId Int @unique @map("rodent_id")
   rodent Rodent @relation(fields: [rodentId], references: [id])
+
+  @@map("advertisment")
 }
 
 model Features {
