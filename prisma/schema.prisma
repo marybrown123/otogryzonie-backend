@@ -19,6 +19,23 @@ model User {
   @@map("user")
 }
 
+model Rodent {
+  id Int @default(autoincrement()) @id
+  name String
+  type RodentType
+
+  @@map("rodent")
+}
+
+enum RodentType {
+  GUINEA_PIG
+  HAMSTER
+  RAT
+  MOUSE
+  CHINCHILLA
+  DEGUS
+}
+
 enum UserType {
   BREEDER
   PRIVATE_PERSON
