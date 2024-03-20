@@ -15,6 +15,7 @@ model User {
   secondName String @map("second_name")
   phoneNumber String @map("phone_number")
   type UserType
+  advertisments Advertisment[]
 
   @@map("user")
 }
@@ -23,8 +24,20 @@ model Rodent {
   id Int @default(autoincrement()) @id
   name String
   type RodentType
+  advertisment Advertisment?
 
   @@map("rodent")
+}
+
+model Advertisment {
+  id Int @default(autoincrement()) @id
+  description String
+  type AdvertismentType
+  location String
+  userId Int
+  user User @relation(fields: [userId], references: [id])
+  rodentId Int @unique
+  rodent Rodent @relation(fields: [rodentId], references: [id])
 }
 
 enum RodentType {
@@ -39,4 +52,9 @@ enum RodentType {
 enum UserType {
   BREEDER
   PRIVATE_PERSON
+}
+
+enum AdvertismentType {
+  BREEDING
+  ADOPTIVE
 }
