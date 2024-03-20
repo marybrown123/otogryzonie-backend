@@ -16,6 +16,7 @@ model User {
   phoneNumber String @map("phone_number")
   type UserType
   advertisments Advertisment[]
+  image UserImage?
 
   @@map("user")
 }
@@ -27,6 +28,7 @@ model Rodent {
   advertisment Advertisment?
   featuresId Int @unique @map("features_id")
   features Features @relation(fields: [featuresId], references: [id])
+  images RodentImage[]
 
   @@map("rodent")
 }
@@ -56,6 +58,26 @@ model Features {
   rodent Rodent?
 
   @@map("features")
+}
+
+model RodentImage {
+  id Int @default(autoincrement()) @id
+  name String
+  url String
+  rodentId Int @map("rodent_id")
+  rodent Rodent @relation(fields: [rodentId], references: [id])
+
+  @@map("rodent_image")
+}
+
+model UserImage {
+  id Int @default(autoincrement()) @id
+  name String
+  url String
+  userId Int @unique @map("user_id")
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("user_image")
 }
 
 enum RodentType {
