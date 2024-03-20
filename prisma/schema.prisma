@@ -25,6 +25,8 @@ model Rodent {
   name String
   type RodentType
   advertisment Advertisment?
+  featuresId Int @unique
+  features Features @relation(fields: [featuresId], references: [id])
 
   @@map("rodent")
 }
@@ -38,6 +40,20 @@ model Advertisment {
   user User @relation(fields: [userId], references: [id])
   rodentId Int @unique
   rodent Rodent @relation(fields: [rodentId], references: [id])
+}
+
+model Features {
+  id Int @default(autoincrement()) @id
+  species String
+  gender Gender
+  age String
+  color String
+  domestication String
+  hairLength String @map("hair_length")
+  neutered String
+  rodent Rodent?
+
+  @@map("features")
 }
 
 enum RodentType {
@@ -57,4 +73,9 @@ enum UserType {
 enum AdvertismentType {
   BREEDING
   ADOPTIVE
+}
+
+enum Gender {
+  MALE
+  FEMALE
 }
