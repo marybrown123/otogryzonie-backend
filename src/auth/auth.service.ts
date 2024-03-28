@@ -19,5 +19,7 @@ export class AuthService {
     if (!passwordValid) {
       throw new HttpException('Incorrect credentials', HttpStatus.UNAUTHORIZED);
     }
+
+    return userFromDb;
   }
 }
