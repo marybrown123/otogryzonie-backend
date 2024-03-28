@@ -5,6 +5,7 @@ import { TokenService } from 'src/token/token.service';
 @Module({
   imports: [
     JwtModule.register({
+      global: true,
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '3600s' },
     }),
