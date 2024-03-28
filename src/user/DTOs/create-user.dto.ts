@@ -1,11 +1,5 @@
 import { UserType } from '@prisma/client';
-import {
-  IsEmail,
-  IsString,
-  Length,
-  MinLength,
-  ValidateNested,
-} from 'class-validator';
+import { IsEmail, IsEnum, IsString, Length, MinLength } from 'class-validator';
 
 export class CreateUserDTO {
   @IsString()
@@ -26,6 +20,7 @@ export class CreateUserDTO {
   @Length(12)
   phoneNumber: string;
 
-  @ValidateNested()
+  @IsString()
+  @IsEnum(UserType)
   type: UserType;
 }
