@@ -25,6 +25,6 @@ export class UserResponse implements Omit<User, 'password'> {
   @ApiProperty({ type: 'string', example: '+48123456789' })
   phoneNumber: string;
 
-  @ApiProperty({ type: UserType, example: 'BREEDER' })
+  @ApiProperty({ type: 'string', example: 'BREEDER' })
   type: UserType;
 }

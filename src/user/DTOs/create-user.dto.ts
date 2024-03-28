@@ -38,6 +38,6 @@ export class CreateUserDTO {
 
   @IsString()
   @IsEnum(UserType)
-  @ApiProperty({ type: UserType, example: 'BREEDER' })
+  @ApiProperty({ type: 'string', example: 'BREEDER' })
   type: UserType;
 }
