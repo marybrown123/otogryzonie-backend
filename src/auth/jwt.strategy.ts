@@ -16,7 +16,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  async validateUser(payload: AuthenticatedUserPayload): Promise<User> {
+  async validate(payload: AuthenticatedUserPayload): Promise<User> {
     const currentUser = await this.userService.findUserById(payload.sub);
 
     if (currentUser) {
