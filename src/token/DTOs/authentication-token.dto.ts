@@ -1,1 +1,3 @@
-export class AuthenticationTokenDTO {}
+export class AuthenticationTokenDTO {
+  authenticationToken: string;
+}
