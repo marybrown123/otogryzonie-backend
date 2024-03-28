@@ -5,8 +5,10 @@ import {
   ApiOkResponse,
   ApiTags,
   ApiUnauthorizedResponse,
+  ApiBody,
 } from '@nestjs/swagger';
 import { User } from '@prisma/client';
+import { UserLoginDTO } from 'src/auth/DTOs/user-login.dto';
 import { AuthenticationTokenDTO } from 'src/token/DTOs/authentication-token.dto';
 import { TokenService } from 'src/token/token.service';
 import { CurrentUser } from 'src/user/decorators/current-user.decorator';
@@ -18,6 +20,7 @@ export class AuthController {
 
   @UseGuards(AuthGuard('local'))
   @ApiOperation({ summary: 'Log in' })
+  @ApiBody({ type: UserLoginDTO })
   @ApiOkResponse({ type: AuthenticationTokenDTO })
   @ApiUnauthorizedResponse({ description: 'Wrong credentials' })
   @Post()
