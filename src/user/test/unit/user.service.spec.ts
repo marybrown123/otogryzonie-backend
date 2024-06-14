@@ -48,10 +48,10 @@ describe('UserService', () => {
       .spyOn(prismaService.user, 'create')
       .mockResolvedValue(prismaUserCreateMockResult);
 
-    const userServiceFindUserByEmailMockResult: User = null;
+    const userServiceFindUserByEmailMockResult: User | null = null;
 
-    const userServiceFindUserByEmailMock = jest
-      .spyOn(userService, 'findUserByEmail')
+    const prismaUserFindUniqueMock = jest
+      .spyOn(prismaService.user, 'findUnique')
       .mockResolvedValue(userServiceFindUserByEmailMockResult);
 
     const userServiceHashPasswordMockResult = 'testPasswordMock';
@@ -63,7 +63,7 @@ describe('UserService', () => {
     const testResult = await userService.createUser(testUserCorrect);
 
     expect(prismaUserCreateMock).toHaveBeenCalledTimes(1);
-    expect(userServiceFindUserByEmailMock).toHaveBeenCalledTimes(1);
+    expect(prismaUserFindUniqueMock).toHaveBeenCalledTimes(1);
     expect(userServiceHashPasswordMock).toHaveBeenCalledTimes(1);
     expect(testResult.id).toBe(1);
     expect(testResult.email).toBe('test@mail.com');
@@ -133,7 +133,7 @@ describe('UserService', () => {
   });
 
   it('should return null when user is not found by email', async () => {
-    const prismaUserFindUniqueMockResult: User = null;
+    const prismaUserFindUniqueMockResult: User | null = null;
 
     const prismaUserFindUniqueMock = jest
       .spyOn(prismaService.user, 'findUnique')
@@ -176,7 +176,7 @@ describe('UserService', () => {
   });
 
   it('should return null when user is not found by id', async () => {
-    const prismaUserFindUniqueMockResult: User = null;
+    const prismaUserFindUniqueMockResult: User | null = null;
 
     const prismaUserFindUniqueMock = jest
       .spyOn(prismaService.user, 'findUnique')
