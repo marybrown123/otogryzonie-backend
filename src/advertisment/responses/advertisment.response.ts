@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import {
   Advertisment,
   AdvertismentType,
@@ -21,10 +22,21 @@ export class AdvertismentResponse {
     this.rodent = new RodentResponse(advertisment.rodent);
     this.user = new UserResponse(advertisment.user);
   }
+  @ApiProperty({ type: 'number' })
   id: number;
+
+  @ApiProperty({ type: 'string' })
   description: string;
+
+  @ApiProperty({ enum: AdvertismentType })
   type: AdvertismentType;
+
+  @ApiProperty({ type: 'string' })
   location: string;
+
+  @ApiProperty({ type: RodentResponse })
   rodent: RodentResponse;
+
+  @ApiProperty({ type: UserResponse })
   user: UserResponse;
 }
