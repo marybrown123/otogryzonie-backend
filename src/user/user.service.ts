@@ -4,6 +4,7 @@ import { CreateUserDTO } from './DTOs/create-user.dto';
 import { UserResponse } from './responses/user.response';
 import * as bcrypt from 'bcrypt';
 import { User } from '@prisma/client';
+import { UpdateUserDTO } from 'src/user/DTOs/update-user.dto';
 
 @Injectable()
 export class UserService {
@@ -50,5 +51,33 @@ export class UserService {
         id,
       },
     });
+  }
+
+  async updateUser(id: number, newUser: UpdateUserDTO): Promise<UserResponse> {
+    const userFromDb = await this.findUserById(id);
+
+    if (!userFromDb) {
+      throw new HttpException('User does not exist', HttpStatus.BAD_REQUEST);
+    }
+
+    const updatedUser = await this.prismaService.user.update({
+      where: {
+        id,
+      },
+      data: {
+        email: newUser.email ? newUser.email : userFromDb.email,
+        password: userFromDb.password,
+        name: newUser.name ? newUser.name : userFromDb.name,
+        secondName: newUser.secondName
+          ? newUser.secondName
+          : userFromDb.secondName,
+        phoneNumber: newUser.phoneNumber
+          ? newUser.phoneNumber
+          : userFromDb.phoneNumber,
+        type: userFromDb.type,
+      },
+    });
+
+    return new UserResponse(updatedUser);
   }
 }
