@@ -4,6 +4,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { CreateUserDTO } from '../../DTOs/create-user.dto';
 import { UserService } from '../../user.service';
 import { HttpException, HttpStatus } from '@nestjs/common';
+import { UpdateUserDTO } from 'src/user/DTOs/update-user.dto';
 
 const testUserCorrect: CreateUserDTO = {
   email: 'test@mail.com',
@@ -12,6 +13,11 @@ const testUserCorrect: CreateUserDTO = {
   password: 'testPassword',
   phoneNumber: '+48123456789',
   type: 'BREEDER',
+};
+
+const testUpdateUser: UpdateUserDTO = {
+  name: 'testNameUpdated',
+  secondName: 'testSecondNameUpdated',
 };
 
 describe('UserService', () => {
@@ -188,5 +194,73 @@ describe('UserService', () => {
 
     expect(prismaUserFindUniqueMock).toHaveBeenCalledTimes(1);
     expect(testResult).toBe(null);
+  });
+
+  it('should update user when found', async () => {
+    const userServiceFindByIdMockResult: User = {
+      id: 1,
+      email: 'test@mail.com',
+      name: 'testName',
+      secondName: 'testSecondName',
+      password: 'testPassword',
+      phoneNumber: '+48123456789',
+      type: 'BREEDER',
+    };
+
+    const prismaServiceUserUpdateMockResult: User = {
+      id: 1,
+      email: 'test@mail.com',
+      name: 'testNameUpdated',
+      secondName: 'testSecondNameUpdated',
+      password: 'testPassword',
+      phoneNumber: '+48123456789',
+      type: 'BREEDER',
+    };
+
+    const userServiceFindByIdMock = jest
+      .spyOn(userService, 'findUserById')
+      .mockResolvedValue(userServiceFindByIdMockResult);
+
+    const prismaServiceUserUpdateMock = jest
+      .spyOn(prismaService.user, 'update')
+      .mockResolvedValue(prismaServiceUserUpdateMockResult);
+
+    const testUserId = 1;
+
+    const testResult = await userService.updateUser(testUserId, testUpdateUser);
+
+    expect(userServiceFindByIdMock).toHaveBeenCalledTimes(1);
+    expect(prismaServiceUserUpdateMock).toHaveBeenCalledTimes(1);
+    expect(testResult.id).toBe(1);
+    expect(testResult.email).toBe('test@mail.com');
+    expect(testResult.name).toBe('testNameUpdated');
+    expect(testResult.secondName).toBe('testSecondNameUpdated');
+    expect(testResult.phoneNumber).toBe('+48123456789');
+    expect(testResult.type).toBe('BREEDER');
+  });
+
+  it('should throw an exception when user is not found while update', async () => {
+    const userServiceFindByIdMockResult: User | null = null;
+
+    const userServiceFindByIdMock = jest
+      .spyOn(userService, 'findUserById')
+      .mockResolvedValue(userServiceFindByIdMockResult);
+
+    const prismaServiceUserUpdateMock = jest.spyOn(
+      prismaService.user,
+      'update',
+    );
+
+    const testUserId = 1;
+
+    try {
+      await userService.updateUser(testUserId, testUpdateUser);
+    } catch (error) {
+      expect(prismaServiceUserUpdateMock).toHaveBeenCalledTimes(0);
+      expect(userServiceFindByIdMock).toHaveBeenCalledTimes(1);
+      expect(error).toBeInstanceOf(HttpException);
+      expect(error.getStatus()).toBe(HttpStatus.BAD_REQUEST);
+      expect(error.getResponse()).toEqual('User does not exist');
+    }
   });
 });
