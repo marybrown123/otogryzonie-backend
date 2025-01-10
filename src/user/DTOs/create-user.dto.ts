@@ -30,8 +30,8 @@ export class CreateUserDTO {
   @Length(12)
   @ApiProperty({
     type: 'string',
-    maxLength: 11,
-    minLength: 11,
+    maxLength: 12,
+    minLength: 12,
     example: '+48123456789',
   })
   phoneNumber: string;
