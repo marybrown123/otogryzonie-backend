@@ -1,9 +1,9 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
-import { AuthenticationTokenDTO } from 'src/token/DTOs/authentication-token.dto';
-import { UserPasswordUpdateTokenDTO } from 'src/token/DTOs/password-reset-token.dto';
-import { UserPayload } from 'src/token/interfaces/authenticated-user-payload.interface';
+import { AuthenticationTokenDTO } from './DTOs/authentication-token.dto';
+import { UserPasswordUpdateTokenDTO } from './DTOs/password-reset-token.dto';
+import { UserPayload } from './interfaces/authenticated-user-payload.interface';
 
 @Injectable()
 export class TokenService {

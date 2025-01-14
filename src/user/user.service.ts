@@ -4,9 +4,9 @@ import { CreateUserDTO } from './DTOs/create-user.dto';
 import { UserResponse } from './responses/user.response';
 import * as bcrypt from 'bcrypt';
 import { User } from '@prisma/client';
-import { UpdateUserDTO } from 'src/user/DTOs/update-user.dto';
-import { TokenService } from 'src/token/token.service';
-import { MailService } from 'src/mail/mail.service';
+import { UpdateUserDTO } from './DTOs/update-user.dto';
+import { TokenService } from '../token/token.service';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class UserService {

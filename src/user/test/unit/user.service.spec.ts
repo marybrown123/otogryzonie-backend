@@ -4,7 +4,14 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { CreateUserDTO } from '../../DTOs/create-user.dto';
 import { UserService } from '../../user.service';
 import { HttpException, HttpStatus } from '@nestjs/common';
-import { UpdateUserDTO } from 'src/user/DTOs/update-user.dto';
+import { UpdateUserDTO } from '../../DTOs/update-user.dto';
+import { TokenService } from '../../../token/token.service';
+import { MailService } from '../../../mail/mail.service';
+import { JwtService } from '@nestjs/jwt';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { UserPasswordUpdateTokenDTO } from 'src/token/DTOs/password-reset-token.dto';
+import { UserPayload } from 'src/token/interfaces/authenticated-user-payload.interface';
+import { UpdatePasswordDTO } from 'src/user/DTOs/update-passoword.dto';
 
 const testUserCorrect: CreateUserDTO = {
   email: 'test@mail.com',
@@ -23,15 +30,37 @@ const testUpdateUser: UpdateUserDTO = {
 describe('UserService', () => {
   let prismaService: PrismaService;
   let userService: UserService;
+  let tokenService: TokenService;
+  let mailService: MailService;
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [PrismaService, UserService],
+      providers: [
+        PrismaService,
+        UserService,
+        TokenService,
+        MailService,
+        JwtService,
+      ],
+      imports: [
+        MailerModule.forRoot({
+          transport: {
+            host: process.env.MAIL_HOST,
+            port: parseInt(process.env.MAIL_PORT, 10),
+            auth: {
+              user: process.env.MAIL_USER,
+              pass: process.env.MAIL_PASS,
+            },
+          },
+        }),
+      ],
     }).compile();
 
     await module.createNestApplication().init();
     userService = module.get<UserService>(UserService);
     prismaService = module.get<PrismaService>(PrismaService);
+    tokenService = module.get<TokenService>(TokenService);
+    mailService = module.get<MailService>(MailService);
   });
 
   afterEach(async () => {
@@ -262,5 +291,168 @@ describe('UserService', () => {
       expect(error.getStatus()).toBe(HttpStatus.BAD_REQUEST);
       expect(error.getResponse()).toEqual('User does not exist');
     }
+  });
+
+  it('should throw an exception when user is not found while sending password update request', async () => {
+    const userServiceFindByEmailMockResult: User | null = null;
+
+    const userServiceFindByEmailMock = jest
+      .spyOn(userService, 'findUserByEmail')
+      .mockResolvedValue(userServiceFindByEmailMockResult);
+
+    const tokenServiceGenerateUserPasswordUpdateTokenMock = jest.spyOn(
+      tokenService,
+      'generateUserPasswordUpdateToken',
+    );
+
+    const mailServiceSendMailMock = jest.spyOn(mailService, 'sendMail');
+
+    const testEmail = 'test@email.com';
+    try {
+      await userService.updatePasswordRequest(testEmail);
+    } catch (error) {
+      expect(userServiceFindByEmailMock).toHaveBeenCalledTimes(1);
+      expect(
+        tokenServiceGenerateUserPasswordUpdateTokenMock,
+      ).toHaveBeenCalledTimes(0);
+      expect(mailServiceSendMailMock).toHaveBeenCalledTimes(0);
+    }
+  });
+
+  it('should create update password request when user is found', async () => {
+    const userServiceFindByEmailMockResult: User = {
+      id: 1,
+      email: 'test@mail.com',
+      name: 'testName',
+      secondName: 'testSecondName',
+      password: 'testPassword',
+      phoneNumber: '+48123456789',
+      type: 'BREEDER',
+    };
+
+    const tokenServiceGenerateUserPasswordUpdateTokenMockResult: UserPasswordUpdateTokenDTO =
+      { userPasswordUpdateToken: 'test.token' };
+
+    const userServiceFindByEmailMock = jest
+      .spyOn(userService, 'findUserByEmail')
+      .mockResolvedValue(userServiceFindByEmailMockResult);
+
+    const tokenServiceGenerateUserPasswordUpdateTokenMock = jest
+      .spyOn(tokenService, 'generateUserPasswordUpdateToken')
+      .mockResolvedValue(tokenServiceGenerateUserPasswordUpdateTokenMockResult);
+
+    const mailServiceSendMailMock = jest.spyOn(mailService, 'sendMail');
+
+    const testEmail = 'testEmail';
+
+    await userService.updatePasswordRequest(testEmail);
+
+    expect(userServiceFindByEmailMock).toHaveBeenCalledTimes(1);
+    expect(
+      tokenServiceGenerateUserPasswordUpdateTokenMock,
+    ).toHaveBeenCalledTimes(1);
+    expect(mailServiceSendMailMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('should throw an exception when token is incorrect while updating password', async () => {
+    const tokenServiceVerifyUserPasswordTokenMockResult: UserPayload = {
+      sub: 1,
+      email: 'test@email.com',
+    };
+
+    const userServiceFindUserByIdMockResult: User | null = null;
+
+    const tokenServiceVerifyUserPasswordTokenMock = jest
+      .spyOn(tokenService, 'verifyUserPasswordUpdateToken')
+      .mockResolvedValue(tokenServiceVerifyUserPasswordTokenMockResult);
+
+    const userServiceFindUserByIdMock = jest
+      .spyOn(userService, 'findUserById')
+      .mockResolvedValue(userServiceFindUserByIdMockResult);
+
+    const userServiceHashPasswordMock = jest.spyOn(userService, 'hashPassword');
+
+    const prismaServiceUserUpdateMock = jest.spyOn(
+      prismaService.user,
+      'update',
+    );
+
+    const testUpdatePassword: UpdatePasswordDTO = {
+      token: 'test.token',
+      newPassword: 'testNewPassword',
+    };
+
+    try {
+      await userService.updatePasssoword(
+        testUpdatePassword.token,
+        testUpdatePassword.newPassword,
+      );
+    } catch (error) {
+      expect(tokenServiceVerifyUserPasswordTokenMock).toHaveBeenCalledTimes(1);
+      expect(userServiceFindUserByIdMock).toHaveBeenCalledTimes(1);
+      expect(userServiceHashPasswordMock).toHaveBeenCalledTimes(0);
+      expect(prismaServiceUserUpdateMock).toHaveBeenCalledTimes(0);
+    }
+  });
+
+  it('should update password', async () => {
+    const tokenServiceVerifyUserPasswordTokenMockResult: UserPayload = {
+      sub: 1,
+      email: 'test@email.com',
+    };
+
+    const userServiceFindUserByIdMockResult: User = {
+      id: 1,
+      email: 'test@mail.com',
+      name: 'testName',
+      secondName: 'testSecondName',
+      password: 'testPassword',
+      phoneNumber: '+48123456789',
+      type: 'BREEDER',
+    };
+
+    const userServiceHashPasswordMockResult: string = 'testHashedPassword';
+
+    const prismaServiceUserUpdateMockResult: User = {
+      id: 1,
+      email: 'test@mail.com',
+      name: 'testName',
+      secondName: 'testSecondName',
+      password: 'testPassword',
+      phoneNumber: '+48123456789',
+      type: 'BREEDER',
+    };
+
+    const tokenServiceVerifyUserPasswordTokenMock = jest
+      .spyOn(tokenService, 'verifyUserPasswordUpdateToken')
+      .mockResolvedValue(tokenServiceVerifyUserPasswordTokenMockResult);
+
+    const userServiceFindUserByIdMock = jest
+      .spyOn(userService, 'findUserById')
+      .mockResolvedValue(userServiceFindUserByIdMockResult);
+
+    const userServiceHashPasswordMock = jest
+      .spyOn(userService, 'hashPassword')
+      .mockResolvedValue(userServiceHashPasswordMockResult);
+
+    const prismaServiceUserUpdateMock = jest
+      .spyOn(prismaService.user, 'update')
+      .mockResolvedValue(prismaServiceUserUpdateMockResult);
+
+    const testUpdatePassword: UpdatePasswordDTO = {
+      token: 'test.token',
+      newPassword: 'testNewPassword',
+    };
+
+    const result = await userService.updatePasssoword(
+      testUpdatePassword.token,
+      testUpdatePassword.newPassword,
+    );
+
+    expect(result).toBe('Password updated succesfully');
+    expect(tokenServiceVerifyUserPasswordTokenMock).toHaveBeenCalledTimes(1);
+    expect(userServiceFindUserByIdMock).toHaveBeenCalledTimes(1);
+    expect(userServiceHashPasswordMock).toHaveBeenCalledTimes(1);
+    expect(prismaServiceUserUpdateMock).toHaveBeenCalledTimes(1);
   });
 });
