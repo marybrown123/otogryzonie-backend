@@ -5,10 +5,16 @@ import { UserResponse } from './responses/user.response';
 import * as bcrypt from 'bcrypt';
 import { User } from '@prisma/client';
 import { UpdateUserDTO } from 'src/user/DTOs/update-user.dto';
+import { TokenService } from 'src/token/token.service';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class UserService {
-  constructor(private prismaService: PrismaService) {}
+  constructor(
+    private prismaService: PrismaService,
+    private tokenService: TokenService,
+    private mailService: MailService,
+  ) {}
 
   async createUser(user: CreateUserDTO): Promise<UserResponse> {
     const userFromDb = await this.findUserByEmail(user.email);
@@ -61,9 +67,7 @@ export class UserService {
     }
 
     const updatedUser = await this.prismaService.user.update({
-      where: {
-        id,
-      },
+      where: { id },
       data: {
         email: newUser.email ? newUser.email : userFromDb.email,
         password: userFromDb.password,
@@ -79,5 +83,50 @@ export class UserService {
     });
 
     return new UserResponse(updatedUser);
+  }
+
+  async updatePasswordRequest(email: string): Promise<void> {
+    const user: User = await this.findUserByEmail(email);
+
+    if (!user) {
+      throw new HttpException('User does not exist', HttpStatus.BAD_REQUEST);
+    }
+
+    const userPasswordUpdateToken =
+      await this.tokenService.generateUserPasswordUpdateToken(user);
+
+    await this.mailService.sendMail(
+      user.email,
+      'Otogryzonie',
+      'Password reset',
+      `Hello ${user.name}, click the following link to update your password: http://testLink/${userPasswordUpdateToken.userPasswordUpdateToken}`,
+    );
+  }
+
+  async updatePasssoword(
+    passwordUpdateToken: string,
+    newPassword: string,
+  ): Promise<string> {
+    const payload =
+      await this.tokenService.verifyUserPasswordUpdateToken(
+        passwordUpdateToken,
+      );
+
+    const user = await this.findUserById(payload.sub);
+
+    if (!user) {
+      throw new HttpException('Invalid token', HttpStatus.BAD_REQUEST);
+    }
+
+    const newHashedPassword = await this.hashPassword(newPassword);
+
+    await this.prismaService.user.update({
+      where: { id: payload.sub },
+      data: {
+        password: newHashedPassword,
+      },
+    });
+
+    return 'Password updated succesfully';
   }
 }
