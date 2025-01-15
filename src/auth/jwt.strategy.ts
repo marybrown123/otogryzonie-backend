@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { User } from '@prisma/client';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { AuthenticatedUserPayload } from 'src/token/interfaces/authenticated-user-payload.interface';
+import { UserPayload } from 'src/token/interfaces/authenticated-user-payload.interface';
 import { UserService } from 'src/user/user.service';
 
 @Injectable()
@@ -15,7 +15,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  async validate(payload: AuthenticatedUserPayload): Promise<User> {
+  async validate(payload: UserPayload): Promise<User> {
     const currentUser = await this.userService.findUserById(payload.sub);
 
     if (currentUser) {

@@ -1,4 +1,4 @@
-export interface AuthenticatedUserPayload {
+export interface UserPayload {
   email: string;
   sub: number;
 }
